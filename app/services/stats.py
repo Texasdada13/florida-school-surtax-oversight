@@ -17,12 +17,12 @@ def get_overview_stats(cursor: sqlite3.Cursor) -> Dict[str, Any]:
     cursor.execute('''
         SELECT
             COUNT(*) as total_projects,
-            SUM(current_amount) as total_budget,
-            SUM(amount_paid) as total_spent,
-            SUM(CASE WHEN status = 'Active' THEN 1 ELSE 0 END) as active_projects,
-            SUM(CASE WHEN status = 'Complete' THEN 1 ELSE 0 END) as completed_projects,
-            SUM(CASE WHEN is_delayed = 1 THEN 1 ELSE 0 END) as delayed_projects,
-            SUM(CASE WHEN is_over_budget = 1 THEN 1 ELSE 0 END) as over_budget_projects,
+            COALESCE(SUM(current_amount), 0) as total_budget,
+            COALESCE(SUM(total_paid), 0) as total_spent,
+            COUNT(CASE WHEN status = 'Active' THEN 1 END) as active_projects,
+            COUNT(CASE WHEN status = 'Completed' THEN 1 END) as completed_projects,
+            COUNT(CASE WHEN is_delayed = 1 THEN 1 END) as delayed_projects,
+            COUNT(CASE WHEN is_over_budget = 1 THEN 1 END) as over_budget_projects,
             AVG(percent_complete) as avg_completion
         FROM contracts
         WHERE is_deleted = 0 AND surtax_category IS NOT NULL
@@ -45,8 +45,8 @@ def get_spending_by_category(cursor: sqlite3.Cursor) -> List[Dict[str, Any]]:
         SELECT
             surtax_category as category,
             COUNT(*) as project_count,
-            SUM(current_amount) as total_budget,
-            SUM(amount_paid) as total_spent,
+            COALESCE(SUM(current_amount), 0) as total_budget,
+            COALESCE(SUM(total_paid), 0) as total_spent,
             AVG(percent_complete) as avg_completion
         FROM contracts
         WHERE is_deleted = 0 AND surtax_category IS NOT NULL
@@ -68,8 +68,8 @@ def get_spending_by_school(cursor: sqlite3.Cursor) -> List[Dict[str, Any]]:
         SELECT
             school_name,
             COUNT(*) as project_count,
-            SUM(current_amount) as total_budget,
-            SUM(amount_paid) as total_spent,
+            COALESCE(SUM(current_amount), 0) as total_budget,
+            COALESCE(SUM(total_paid), 0) as total_spent,
             AVG(percent_complete) as avg_completion
         FROM contracts
         WHERE is_deleted = 0 AND surtax_category IS NOT NULL AND school_name IS NOT NULL
@@ -90,9 +90,9 @@ def get_budget_vs_actual(cursor: sqlite3.Cursor) -> Dict[str, Any]:
     """
     cursor.execute('''
         SELECT
-            SUM(original_amount) as original_budget,
-            SUM(current_amount) as current_budget,
-            SUM(amount_paid) as actual_spent,
+            COALESCE(SUM(original_amount), 0) as original_budget,
+            COALESCE(SUM(current_amount), 0) as current_budget,
+            COALESCE(SUM(total_paid), 0) as actual_spent,
             AVG(percent_complete) as avg_progress
         FROM contracts
         WHERE is_deleted = 0 AND surtax_category IS NOT NULL
@@ -125,8 +125,8 @@ def get_expenditure_type_breakdown(cursor: sqlite3.Cursor) -> List[Dict[str, Any
         SELECT
             COALESCE(expenditure_type, 'Unclassified') as expenditure_type,
             COUNT(*) as count,
-            SUM(current_amount) as total_budget,
-            SUM(amount_paid) as total_spent
+            COALESCE(SUM(current_amount), 0) as total_budget,
+            COALESCE(SUM(total_paid), 0) as total_spent
         FROM contracts
         WHERE is_deleted = 0 AND surtax_category IS NOT NULL
         GROUP BY expenditure_type

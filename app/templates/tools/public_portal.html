@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="bg-blue-50 border border-blue-200 rounded-xl p-6">
+        <h3 class="text-lg font-semibold text-blue-900 mb-2">Public Transparency Portal</h3>
+        <p class="text-blue-700">This is a citizen-facing view of surtax project information. Share this link with the public.</p>
+    </div>
+
+    <!-- Public Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 text-center">
+            <p class="text-3xl font-bold text-gray-900">{{ summary.total_projects or 0 }}</p>
+            <p class="text-sm text-gray-500">Total Projects</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 text-center">
+            <p class="text-3xl font-bold text-gray-900">{{ summary.total_budget|currency }}</p>
+            <p class="text-sm text-gray-500">Total Investment</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 text-center">
+            <p class="text-3xl font-bold text-gray-900">{{ summary.completed or 0 }}</p>
+            <p class="text-sm text-gray-500">Completed</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 text-center">
+            <p class="text-3xl font-bold text-gray-900">{{ (summary.total_projects or 0) - (summary.completed or 0) }}</p>
+            <p class="text-sm text-gray-500">In Progress</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

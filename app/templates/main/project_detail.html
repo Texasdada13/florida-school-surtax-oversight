@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Back Link -->
+    <a href="{{ url_for('main.projects') }}" class="inline-flex items-center text-sm text-gray-500 hover:text-gray-700">
+        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+        </svg>
+        Back to Projects
+    </a>
+
+    <!-- Project Header -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div class="flex justify-between items-start">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">{{ project.title }}</h1>
+                <p class="text-gray-500 mt-1">{{ project.school_name or 'District-wide' }}</p>
+            </div>
+            <div class="flex items-center space-x-2">
+                {% if project.is_delayed %}
+                <span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium">Delayed {{ project.delay_days }} days</span>
+                {% endif %}
+                {% if project.is_over_budget %}
+                <span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-medium">Over Budget</span>
+                {% endif %}
+                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">{{ project.status }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <p class="text-sm text-gray-500">Original Budget</p>
+            <p class="text-xl font-bold text-gray-900">{{ project.original_amount|currency_full }}</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <p class="text-sm text-gray-500">Current Budget</p>
+            <p class="text-xl font-bold text-gray-900">{{ project.current_amount|currency_full }}</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <p class="text-sm text-gray-500">Amount Paid</p>
+            <p class="text-xl font-bold text-gray-900">{{ project.total_paid|currency_full }}</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <p class="text-sm text-gray-500">Completion</p>
+            <p class="text-xl font-bold text-gray-900">{{ project.percent_complete|int }}%</p>
+        </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Progress</h3>
+        <div class="w-full bg-gray-200 rounded-full h-4">
+            <div class="h-4 rounded-full {% if project.is_delayed %}bg-yellow-500{% elif project.is_over_budget %}bg-red-500{% else %}bg-blue-600{% endif %}" style="width: {{ project.percent_complete }}%"></div>
+        </div>
+        <div class="flex justify-between mt-2 text-sm text-gray-500">
+            <span>0%</span>
+            <span>{{ project.percent_complete|int }}% Complete</span>
+            <span>100%</span>
+        </div>
+    </div>
+
+    <!-- Details Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Project Details -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Project Details</h3>
+            <dl class="space-y-3">
+                <div class="flex justify-between">
+                    <dt class="text-gray-500">Category</dt>
+                    <dd class="font-medium text-gray-900">{{ project.surtax_category|title|replace('_', ' ') }}</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-gray-500">Vendor</dt>
+                    <dd class="font-medium text-gray-900">{{ project.vendor_name or 'Not assigned' }}</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-gray-500">Start Date</dt>
+                    <dd class="font-medium text-gray-900">{{ project.start_date|date if project.start_date else 'TBD' }}</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-gray-500">Original End Date</dt>
+                    <dd class="font-medium text-gray-900">{{ project.original_end_date|date if project.original_end_date else 'TBD' }}</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-gray-500">Current End Date</dt>
+                    <dd class="font-medium text-gray-900">{{ project.current_end_date|date if project.current_end_date else 'TBD' }}</dd>
+                </div>
+            </dl>
+        </div>
+
+        <!-- Notes -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Notes & Status</h3>
+            {% if project.delay_reason %}
+            <div class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p class="text-sm font-medium text-yellow-800">Delay Reason:</p>
+                <p class="text-sm text-yellow-700">{{ project.delay_reason }}</p>
+            </div>
+            {% endif %}
+            {% if project.notes %}
+            <p class="text-gray-600">{{ project.notes }}</p>
+            {% else %}
+            <p class="text-gray-400 italic">No notes available</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -11,7 +11,7 @@ documents_bp = Blueprint('documents', __name__)
 @documents_bp.route('/documents')
 def documents():
     """Document Library."""
-    return render_template('documents/library.html',
+    return render_template('documents/documents.html',
                           title='Document Library')
 
 
@@ -36,8 +36,8 @@ def annual_report():
         SELECT
             COUNT(*) as total_projects,
             SUM(current_amount) as total_budget,
-            SUM(amount_paid) as total_spent,
-            SUM(CASE WHEN status = 'Complete' THEN 1 ELSE 0 END) as completed,
+            SUM(total_paid) as total_spent,
+            SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END) as completed,
             SUM(CASE WHEN status = 'Active' THEN 1 ELSE 0 END) as active,
             AVG(percent_complete) as avg_progress
         FROM contracts
@@ -51,7 +51,7 @@ def annual_report():
             surtax_category,
             COUNT(*) as count,
             SUM(current_amount) as budget,
-            SUM(amount_paid) as spent
+            SUM(total_paid) as spent
         FROM contracts
         WHERE is_deleted = 0 AND surtax_category IS NOT NULL
         GROUP BY surtax_category

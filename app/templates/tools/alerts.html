@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Alert Settings</h3>
+        <div class="space-y-4">
+            <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                <div>
+                    <p class="font-medium text-gray-900">Budget Variance Alerts</p>
+                    <p class="text-sm text-gray-500">Notify when projects exceed budget by 10%</p>
+                </div>
+                <input type="checkbox" checked class="w-5 h-5 text-blue-600 rounded">
+            </div>
+            <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                <div>
+                    <p class="font-medium text-gray-900">Schedule Delay Alerts</p>
+                    <p class="text-sm text-gray-500">Notify when projects are delayed by 30+ days</p>
+                </div>
+                <input type="checkbox" checked class="w-5 h-5 text-blue-600 rounded">
+            </div>
+            <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                <div>
+                    <p class="font-medium text-gray-900">Milestone Notifications</p>
+                    <p class="text-sm text-gray-500">Notify when projects reach milestones</p>
+                </div>
+                <input type="checkbox" class="w-5 h-5 text-blue-600 rounded">
+            </div>
+        </div>
+    </div>
+
+    {% if alerts %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Recent Alerts</h3>
+        <div class="space-y-3">
+            {% for alert in alerts %}
+            <div class="p-3 {% if alert.severity == 'high' %}bg-red-50{% elif alert.severity == 'medium' %}bg-yellow-50{% else %}bg-blue-50{% endif %} rounded-lg">
+                <p class="text-sm font-medium text-gray-900">{{ alert.message }}</p>
+                <p class="text-xs text-gray-500">{{ alert.created_at }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

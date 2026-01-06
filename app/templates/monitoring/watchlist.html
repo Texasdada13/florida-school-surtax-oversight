@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Watchlist Projects</h3>
+        {% if watchlist %}
+        <div class="space-y-4">
+            {% for item in watchlist %}
+            <div class="p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h4 class="font-medium text-gray-900">{{ item.title }}</h4>
+                        <p class="text-sm text-gray-500">{{ item.school_name or 'District' }} - {{ item.vendor_name }}</p>
+                    </div>
+                    <span class="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">{{ item.status }}</span>
+                </div>
+                <div class="mt-2 flex items-center text-sm text-gray-500">
+                    <span>{{ item.current_amount|currency }}</span>
+                    <span class="mx-2">&bull;</span>
+                    <span>{{ item.percent_complete|int }}% complete</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-gray-500 text-center py-8">No projects on watchlist. Add projects from the Projects page.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Filters -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <div class="flex flex-wrap gap-4 items-center">
+            <div>
+                <label class="text-sm text-gray-600 mr-2">Status:</label>
+                <select onchange="location.href='?status='+this.value+'&category={{ current_category }}&sort={{ current_sort }}'" class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm">
+                    <option value="all" {% if current_status == 'all' %}selected{% endif %}>All</option>
+                    <option value="Active" {% if current_status == 'Active' %}selected{% endif %}>Active</option>
+                    <option value="Completed" {% if current_status == 'Completed' %}selected{% endif %}>Completed</option>
+                    <option value="On Hold" {% if current_status == 'On Hold' %}selected{% endif %}>On Hold</option>
+                </select>
+            </div>
+            <div>
+                <label class="text-sm text-gray-600 mr-2">Category:</label>
+                <select onchange="location.href='?status={{ current_status }}&category='+this.value+'&sort={{ current_sort }}'" class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm">
+                    <option value="all" {% if current_category == 'all' %}selected{% endif %}>All Categories</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat }}" {% if current_category == cat %}selected{% endif %}>{{ cat|title|replace('_', ' ') }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="text-sm text-gray-600 mr-2">Sort:</label>
+                <select onchange="location.href='?status={{ current_status }}&category={{ current_category }}&sort='+this.value" class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm">
+                    <option value="value" {% if current_sort == 'value' %}selected{% endif %}>By Value</option>
+                    <option value="progress" {% if current_sort == 'progress' %}selected{% endif %}>By Progress</option>
+                    <option value="risk" {% if current_sort == 'risk' %}selected{% endif %}>By Risk</option>
+                    <option value="name" {% if current_sort == 'name' %}selected{% endif %}>By Name</option>
+                </select>
+            </div>
+            <div class="ml-auto text-sm text-gray-500">
+                {{ projects|length }} projects
+            </div>
+        </div>
+    </div>
+
+    <!-- Projects Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for project in projects %}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow">
+            <div class="flex justify-between items-start mb-3">
+                <h3 class="font-semibold text-gray-900 text-sm leading-tight">{{ project.title }}</h3>
+                {% if project.is_delayed %}
+                <span class="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs rounded-full">Delayed</span>
+                {% elif project.is_over_budget %}
+                <span class="px-2 py-0.5 bg-red-100 text-red-800 text-xs rounded-full">Over Budget</span>
+                {% elif project.status == 'Completed' %}
+                <span class="px-2 py-0.5 bg-green-100 text-green-800 text-xs rounded-full">Complete</span>
+                {% else %}
+                <span class="px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded-full">{{ project.status }}</span>
+                {% endif %}
+            </div>
+
+            <p class="text-xs text-gray-500 mb-3">{{ project.school_name or 'District-wide' }}</p>
+
+            <div class="space-y-2 mb-3">
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-500">Budget</span>
+                    <span class="font-medium">{{ project.current_amount|currency }}</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-500">Progress</span>
+                    <span class="font-medium">{{ project.percent_complete|int }}%</span>
+                </div>
+            </div>
+
+            <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="h-2 rounded-full {% if project.is_delayed %}bg-yellow-500{% elif project.is_over_budget %}bg-red-500{% else %}bg-blue-600{% endif %}" style="width: {{ project.percent_complete }}%"></div>
+            </div>
+
+            <div class="mt-3 pt-3 border-t border-gray-100 flex justify-between items-center">
+                <span class="text-xs text-gray-400">{{ project.surtax_category|title|replace('_', ' ') }}</span>
+                <a href="{{ url_for('main.project_detail', contract_id=project.contract_id) }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">View Details &rarr;</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if not projects %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+        <svg class="w-12 h-12 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+        </svg>
+        <p class="text-gray-500">No projects match your filters</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <p class="text-sm text-gray-500">Total Changes</p>
+            <p class="text-2xl font-bold text-gray-900">{{ stats.total_changes or 0 }}</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <p class="text-sm text-gray-500">Net Change Value</p>
+            <p class="text-2xl font-bold {% if stats.total_change_value and stats.total_change_value > 0 %}text-red-600{% else %}text-green-600{% endif %}">{{ stats.total_change_value|currency }}</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <p class="text-sm text-gray-500">Increases</p>
+            <p class="text-2xl font-bold text-red-600">{{ stats.increases or 0 }}</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <p class="text-sm text-gray-500">Decreases</p>
+            <p class="text-2xl font-bold text-green-600">{{ stats.decreases or 0 }}</p>
+        </div>
+    </div>
+
+    <!-- Change Orders List -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Project</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Original</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Current</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Change</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">% Change</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for order in change_orders %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4">
+                        <div class="font-medium text-gray-900">{{ order.title }}</div>
+                        <div class="text-sm text-gray-500">{{ order.vendor_name }}</div>
+                    </td>
+                    <td class="px-6 py-4 text-gray-500">{{ order.original_amount|currency }}</td>
+                    <td class="px-6 py-4 text-gray-900">{{ order.current_amount|currency }}</td>
+                    <td class="px-6 py-4 {% if order.change_amount > 0 %}text-red-600{% else %}text-green-600{% endif %}">
+                        {{ order.change_amount|currency }}
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="px-2 py-1 text-xs rounded-full {% if order.change_pct > 10 %}bg-red-100 text-red-800{% elif order.change_pct > 0 %}bg-yellow-100 text-yellow-800{% else %}bg-green-100 text-green-800{% endif %}">
+                            {{ '{:+.1f}'.format(order.change_pct) }}%
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

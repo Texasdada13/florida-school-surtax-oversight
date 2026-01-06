@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
+        {% if audit_log %}
+        <div class="space-y-4">
+            {% for entry in audit_log %}
+            <div class="flex items-start space-x-3 p-3 hover:bg-gray-50 rounded-lg">
+                <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <p class="text-sm text-gray-900">{{ entry.action }}</p>
+                    <p class="text-xs text-gray-500">{{ entry.created_at }} - {{ entry.user_name or 'System' }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-gray-500 text-center py-8">No audit log entries</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

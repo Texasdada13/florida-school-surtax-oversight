@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Concerns List -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Active Concerns</h3>
+        {% if concerns %}
+        <div class="space-y-4">
+            {% for concern in concerns %}
+            <div class="p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h4 class="font-medium text-gray-900">{{ concern.title }}</h4>
+                        <p class="text-sm text-gray-500">{{ concern.school_name or 'District' }}</p>
+                    </div>
+                    {% if concern.is_delayed %}
+                    <span class="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full">Delayed {{ concern.delay_days }} days</span>
+                    {% endif %}
+                    {% if concern.is_over_budget %}
+                    <span class="px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full">Over Budget</span>
+                    {% endif %}
+                </div>
+                {% if concern.delay_reason %}
+                <p class="mt-2 text-sm text-gray-600">{{ concern.delay_reason }}</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-gray-500 text-center py-8">No active concerns</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

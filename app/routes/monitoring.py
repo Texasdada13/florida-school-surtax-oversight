@@ -10,48 +10,33 @@ monitoring_bp = Blueprint('monitoring', __name__)
 
 @monitoring_bp.route('/concerns')
 def concerns():
-    """Concerns and issues tracking."""
+    """Concerns and issues tracking - shows delayed/over-budget projects."""
     conn = get_db()
     cursor = conn.cursor()
 
-    # Check if concerns table exists
+    # Get projects that are delayed or over budget as concerns
     cursor.execute('''
-        SELECT name FROM sqlite_master
-        WHERE type='table' AND name='concerns'
-    ''')
-    if not cursor.fetchone():
-        # Return empty if table doesn't exist
-        return render_template('monitoring/concerns.html',
-                              title='Concerns',
-                              concerns=[],
-                              stats={'open': 0, 'under_review': 0, 'resolved': 0})
-
-    cursor.execute('''
-        SELECT * FROM concerns
+        SELECT
+            contract_id, title, school_name, vendor_name, status,
+            current_amount, percent_complete,
+            is_delayed, delay_days, delay_reason,
+            is_over_budget, budget_variance_pct
+        FROM contracts
+        WHERE is_deleted = 0 AND surtax_category IS NOT NULL
+        AND (is_delayed = 1 OR is_over_budget = 1)
         ORDER BY
-            CASE status
-                WHEN 'Open' THEN 1
-                WHEN 'Under Review' THEN 2
+            CASE
+                WHEN is_delayed = 1 AND is_over_budget = 1 THEN 1
+                WHEN is_over_budget = 1 THEN 2
                 ELSE 3
             END,
-            created_date DESC
+            delay_days DESC
     ''')
     concerns_list = cursor.fetchall()
 
-    # Get stats
-    cursor.execute('''
-        SELECT
-            SUM(CASE WHEN status = 'Open' THEN 1 ELSE 0 END) as open,
-            SUM(CASE WHEN status = 'Under Review' THEN 1 ELSE 0 END) as under_review,
-            SUM(CASE WHEN status = 'Resolved' THEN 1 ELSE 0 END) as resolved
-        FROM concerns
-    ''')
-    stats = cursor.fetchone()
-
     return render_template('monitoring/concerns.html',
                           title='Concerns',
-                          concerns=concerns_list,
-                          stats=stats)
+                          concerns=concerns_list)
 
 
 @monitoring_bp.route('/watchlist')
@@ -60,27 +45,21 @@ def watchlist():
     conn = get_db()
     cursor = conn.cursor()
 
-    # Get watchlist from session
-    watched_ids = session.get('watchlist', [])
-
-    if watched_ids:
-        placeholders = ','.join(['?' for _ in watched_ids])
-        cursor.execute(f'''
-            SELECT
-                id, title, school_name, vendor_name, status,
-                current_amount, percent_complete,
-                is_delayed, delay_days, is_over_budget, budget_variance_pct
-            FROM contracts
-            WHERE id IN ({placeholders})
-            ORDER BY is_delayed DESC, is_over_budget DESC
-        ''', watched_ids)
-        projects = cursor.fetchall()
-    else:
-        projects = []
+    # Get watchlisted projects from database
+    cursor.execute('''
+        SELECT
+            contract_id, title, school_name, vendor_name, status,
+            current_amount, percent_complete,
+            is_delayed, delay_days, is_over_budget, budget_variance_pct
+        FROM contracts
+        WHERE is_deleted = 0 AND is_watchlisted = 1
+        ORDER BY is_delayed DESC, is_over_budget DESC
+    ''')
+    watchlist_projects = cursor.fetchall()
 
     return render_template('monitoring/watchlist.html',
                           title='Watchlist',
-                          projects=projects)
+                          watchlist=watchlist_projects)
 
 
 @monitoring_bp.route('/risk')
@@ -89,45 +68,39 @@ def risk_dashboard():
     conn = get_db()
     cursor = conn.cursor()
 
+    # High risk: delayed AND over budget
     cursor.execute('''
-        SELECT
-            id, title, school_name, vendor_name, status,
-            current_amount, percent_complete,
-            is_delayed, delay_days,
-            is_over_budget, budget_variance_pct,
-            CASE
-                WHEN is_delayed = 1 AND is_over_budget = 1 THEN 'Critical'
-                WHEN is_delayed = 1 OR is_over_budget = 1 THEN 'High'
-                WHEN delay_days > 0 OR budget_variance_pct > 5 THEN 'Medium'
-                ELSE 'Low'
-            END as risk_level
+        SELECT contract_id, title, school_name, current_amount, is_delayed, delay_days, is_over_budget
         FROM contracts
         WHERE is_deleted = 0 AND surtax_category IS NOT NULL
-        ORDER BY
-            CASE
-                WHEN is_delayed = 1 AND is_over_budget = 1 THEN 1
-                WHEN is_delayed = 1 OR is_over_budget = 1 THEN 2
-                ELSE 3
-            END,
-            delay_days DESC
+        AND is_delayed = 1 AND is_over_budget = 1
     ''')
-    projects = cursor.fetchall()
+    high_risk = cursor.fetchall()
 
+    # Medium risk: delayed OR over budget
     cursor.execute('''
-        SELECT
-            COUNT(*) as total,
-            SUM(CASE WHEN is_delayed = 1 AND is_over_budget = 1 THEN 1 ELSE 0 END) as critical,
-            SUM(CASE WHEN (is_delayed = 1 OR is_over_budget = 1) AND NOT (is_delayed = 1 AND is_over_budget = 1) THEN 1 ELSE 0 END) as high,
-            SUM(CASE WHEN is_delayed = 0 AND is_over_budget = 0 THEN 1 ELSE 0 END) as low
+        SELECT contract_id, title, school_name, current_amount, is_delayed, delay_days, is_over_budget
         FROM contracts
         WHERE is_deleted = 0 AND surtax_category IS NOT NULL
+        AND (is_delayed = 1 OR is_over_budget = 1)
+        AND NOT (is_delayed = 1 AND is_over_budget = 1)
     ''')
-    risk_summary = cursor.fetchone()
+    medium_risk = cursor.fetchall()
+
+    # Low risk: neither delayed nor over budget
+    cursor.execute('''
+        SELECT contract_id, title, school_name, current_amount
+        FROM contracts
+        WHERE is_deleted = 0 AND surtax_category IS NOT NULL
+        AND is_delayed = 0 AND is_over_budget = 0
+    ''')
+    low_risk = cursor.fetchall()
 
     return render_template('monitoring/risk_dashboard.html',
                           title='Risk Dashboard',
-                          projects=projects,
-                          risk_summary=risk_summary)
+                          high_risk=high_risk,
+                          medium_risk=medium_risk,
+                          low_risk=low_risk)
 
 
 @monitoring_bp.route('/audit')

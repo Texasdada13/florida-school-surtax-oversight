@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- By Category -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Spending by Category</h3>
+        <div class="space-y-4">
+            {% for cat in category_data %}
+            <div>
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="font-medium text-gray-700">{{ cat.surtax_category|title|replace('_', ' ') }}</span>
+                    <span class="text-gray-500">{{ cat.total_spent|currency }} / {{ cat.total_budget|currency }} ({{ cat.project_count }} projects)</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-3">
+                    {% set pct = ((cat.total_spent or 0) / (cat.total_budget or 1) * 100) %}
+                    <div class="bg-blue-600 h-3 rounded-full" style="width: {{ pct if pct <= 100 else 100 }}%"></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- By Status -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Projects by Status</h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {% for status in status_data %}
+            <div class="text-center p-4 bg-gray-50 rounded-lg">
+                <p class="text-2xl font-bold text-gray-900">{{ status.count }}</p>
+                <p class="text-sm text-gray-500">{{ status.status }}</p>
+                <p class="text-xs text-gray-400">{{ status.value|currency }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

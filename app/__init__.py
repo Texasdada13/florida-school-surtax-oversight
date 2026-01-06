@@ -128,6 +128,8 @@ def _register_blueprints(app):
 
 def _register_error_handlers(app):
     """Register error handlers."""
+    import traceback
+    import sys
 
     @app.errorhandler(404)
     def not_found_error(error):
@@ -137,4 +139,13 @@ def _register_error_handlers(app):
     @app.errorhandler(500)
     def internal_error(error):
         from flask import render_template
+        print(f"500 ERROR: {error}", file=sys.stderr, flush=True)
+        traceback.print_exc()
+        return render_template('errors/500.html', title='Server Error'), 500
+
+    @app.errorhandler(Exception)
+    def handle_exception(error):
+        from flask import render_template
+        print(f"UNHANDLED EXCEPTION: {error}", file=sys.stderr, flush=True)
+        traceback.print_exc()
         return render_template('errors/500.html', title='Server Error'), 500

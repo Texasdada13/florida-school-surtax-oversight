@@ -18,10 +18,13 @@ def index():
     stats = get_overview_stats(cursor)
     spending = get_spending_by_category(cursor)
 
-    # Get concerns count for sidebar badge
+    # Get concerns count (delayed + over budget projects)
     cursor.execute('''
-        SELECT COUNT(*) as count FROM concerns
-        WHERE status = 'Open' OR status = 'Under Review'
+        SELECT
+            COUNT(CASE WHEN is_delayed = 1 THEN 1 END) +
+            COUNT(CASE WHEN is_over_budget = 1 THEN 1 END) as count
+        FROM contracts
+        WHERE is_deleted = 0 AND surtax_category IS NOT NULL
     ''')
     concerns_row = cursor.fetchone()
     concerns_count = concerns_row['count'] if concerns_row else 0
@@ -50,10 +53,9 @@ def projects():
     # Build query
     query = '''
         SELECT
-            id, title, school_name, vendor_name, status,
+            contract_id, title, school_name, vendor_name, status,
             surtax_category, current_amount, percent_complete,
-            is_delayed, delay_days, is_over_budget, budget_variance_pct,
-            expenditure_type
+            is_delayed, delay_days, is_over_budget, budget_variance_pct
         FROM contracts
         WHERE is_deleted = 0 AND surtax_category IS NOT NULL
     '''
@@ -104,7 +106,7 @@ def project_detail(contract_id):
     conn = get_db()
     cursor = conn.cursor()
 
-    cursor.execute('SELECT * FROM contracts WHERE id = ?', (contract_id,))
+    cursor.execute('SELECT * FROM contracts WHERE contract_id = ?', (contract_id,))
     project = cursor.fetchone()
 
     if not project:
@@ -125,10 +127,10 @@ def schools():
         SELECT
             school_name,
             COUNT(*) as project_count,
-            SUM(current_amount) as total_value,
-            SUM(amount_paid) as total_spent,
+            COALESCE(SUM(current_amount), 0) as total_value,
+            COALESCE(SUM(total_paid), 0) as total_spent,
             AVG(percent_complete) as avg_completion,
-            SUM(CASE WHEN is_delayed = 1 THEN 1 ELSE 0 END) as delayed_count
+            COUNT(CASE WHEN is_delayed = 1 THEN 1 END) as delayed_count
         FROM contracts
         WHERE is_deleted = 0 AND surtax_category IS NOT NULL AND school_name IS NOT NULL
         GROUP BY school_name

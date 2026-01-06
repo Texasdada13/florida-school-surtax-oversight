@@ -18,11 +18,11 @@ def meeting_mode():
     cursor.execute('''
         SELECT
             COUNT(*) as total_projects,
-            SUM(current_amount) as total_budget,
-            SUM(amount_paid) as total_spent,
-            SUM(CASE WHEN status = 'Active' THEN 1 ELSE 0 END) as active,
-            SUM(CASE WHEN is_delayed = 1 THEN 1 ELSE 0 END) as delayed,
-            SUM(CASE WHEN is_over_budget = 1 THEN 1 ELSE 0 END) as over_budget
+            COALESCE(SUM(current_amount), 0) as total_budget,
+            COALESCE(SUM(total_paid), 0) as total_spent,
+            COUNT(CASE WHEN status = 'Active' THEN 1 END) as active,
+            COUNT(CASE WHEN is_delayed = 1 THEN 1 END) as delayed,
+            COUNT(CASE WHEN is_over_budget = 1 THEN 1 END) as over_budget
         FROM contracts
         WHERE is_deleted = 0 AND surtax_category IS NOT NULL
     ''')
@@ -30,7 +30,7 @@ def meeting_mode():
 
     # Key projects to highlight
     cursor.execute('''
-        SELECT id, title, school_name, current_amount, percent_complete, status
+        SELECT contract_id, title, school_name, current_amount, percent_complete, status
         FROM contracts
         WHERE is_deleted = 0 AND surtax_category IS NOT NULL
         ORDER BY current_amount DESC
@@ -72,23 +72,32 @@ def compliance_dashboard():
     ''')
     schedule_compliance = cursor.fetchone()
 
-    # Capital vs Operating (surtax should be capital only)
+    # By surtax category for compliance tracking
     cursor.execute('''
         SELECT
-            COALESCE(expenditure_type, 'Unclassified') as exp_type,
+            COALESCE(surtax_category, 'Unclassified') as category,
             COUNT(*) as count,
             SUM(current_amount) as total
         FROM contracts
         WHERE is_deleted = 0 AND surtax_category IS NOT NULL
-        GROUP BY expenditure_type
+        GROUP BY surtax_category
     ''')
-    expenditure_breakdown = cursor.fetchall()
+    category_breakdown = cursor.fetchall()
+
+    # Count by category type for the summary cards
+    capital_count = sum(c['count'] for c in category_breakdown if c['category'] in ['New Construction', 'Renovation', 'Safety/Security', 'Technology', 'Site Improvements'])
+    total_count = sum(c['count'] for c in category_breakdown)
+    capital_pct = (capital_count / total_count * 100) if total_count > 0 else 0
 
     return render_template('tools/compliance.html',
                           title='Compliance',
                           budget_compliance=budget_compliance,
                           schedule_compliance=schedule_compliance,
-                          expenditure_breakdown=expenditure_breakdown)
+                          category_breakdown=category_breakdown,
+                          capital_count=capital_count,
+                          capital_pct=capital_pct,
+                          operating_count=0,
+                          unclassified_count=total_count - capital_count)
 
 
 @tools_bp.route('/map')
@@ -124,8 +133,8 @@ def public_portal():
         SELECT
             COUNT(*) as total_projects,
             SUM(current_amount) as total_budget,
-            SUM(amount_paid) as total_spent,
-            SUM(CASE WHEN status = 'Complete' THEN 1 ELSE 0 END) as completed
+            SUM(total_paid) as total_spent,
+            SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END) as completed
         FROM contracts
         WHERE is_deleted = 0 AND surtax_category IS NOT NULL
     ''')
@@ -134,7 +143,7 @@ def public_portal():
     cursor.execute('''
         SELECT title, school_name, current_amount, surtax_category
         FROM contracts
-        WHERE is_deleted = 0 AND surtax_category IS NOT NULL AND status = 'Complete'
+        WHERE is_deleted = 0 AND surtax_category IS NOT NULL AND status = 'Completed'
         ORDER BY current_end_date DESC
         LIMIT 10
     ''')
@@ -161,7 +170,7 @@ def alerts():
 
     # Delayed projects
     cursor.execute('''
-        SELECT id, title, delay_days
+        SELECT contract_id, title, delay_days
         FROM contracts
         WHERE is_deleted = 0 AND is_delayed = 1
         ORDER BY delay_days DESC
@@ -172,12 +181,12 @@ def alerts():
             'type': 'warning',
             'title': f"Project Delayed: {row['title'][:40]}",
             'message': f"{row['delay_days']} days behind schedule",
-            'project_id': row['id']
+            'project_id': row['contract_id']
         })
 
     # Over budget projects
     cursor.execute('''
-        SELECT id, title, budget_variance_pct
+        SELECT contract_id, title, budget_variance_pct
         FROM contracts
         WHERE is_deleted = 0 AND is_over_budget = 1
         ORDER BY budget_variance_pct DESC
@@ -188,7 +197,7 @@ def alerts():
             'type': 'danger',
             'title': f"Over Budget: {row['title'][:40]}",
             'message': f"{row['budget_variance_pct']:.1f}% over budget",
-            'project_id': row['id']
+            'project_id': row['contract_id']
         })
 
     return render_template('tools/alerts.html',
