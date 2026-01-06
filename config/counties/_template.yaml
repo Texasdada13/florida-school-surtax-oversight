@@ -1,0 +1,55 @@
+# County Configuration Template
+# Copy this file and rename to your county name (e.g., citrus.yaml)
+
+county:
+  name: "YOUR_COUNTY"           # e.g., "Citrus"
+  full_name: "YOUR_COUNTY County"
+  state: "FL"
+  fips_code: "12XXX"            # Look up at census.gov
+
+school_district:
+  name: "YOUR_COUNTY County Public Schools"
+  website: "https://www.example.com"
+  board_website: "https://www.example.com/board"
+
+surtax:
+  name: "Half-Cent Sales Tax for School Facilities"
+  rate: 0.5                     # Percent (most FL counties use 0.5)
+  start_year: 2025              # Year surtax began
+  end_year: 2035                # Year surtax expires
+  duration_years: 10
+  voter_approval_date: "YYYY-MM-DD"
+  estimated_annual_revenue: 0   # Estimated annual revenue in dollars
+
+oversight_committee:
+  name: "School Capital Outlay Surtax Oversight Committee"
+  meeting_schedule: "TBD"
+  meeting_location: "TBD"
+  meeting_time: "TBD"
+
+categories:
+  # Customize based on your county's surtax categories
+  # These should match how projects are classified in your data
+  - name: "New Construction"
+    code: "NC"
+    description: "New school buildings and major additions"
+  - name: "Renovation"
+    code: "REN"
+    description: "Major renovations to existing facilities"
+  - name: "Safety & Security"
+    code: "SEC"
+    description: "Security systems, fencing, access control"
+  # Add more categories as needed...
+
+analytics:
+  comparison_counties:
+    # List neighboring counties for comparison analytics
+    - name: "Neighbor1"
+      fips_code: "12XXX"
+    - name: "Neighbor2"
+      fips_code: "12XXX"
+
+display:
+  logo_path: null               # Optional: path to county logo
+  primary_color: "#1e40af"      # Brand color
+  tagline: "Building Better Schools"

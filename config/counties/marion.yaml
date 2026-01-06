@@ -1,0 +1,70 @@
+# Marion County, Florida - Surtax Oversight Configuration
+
+county:
+  name: "Marion"
+  full_name: "Marion County"
+  state: "FL"
+  fips_code: "12083"
+
+school_district:
+  name: "Marion County Public Schools"
+  website: "https://www.marionschools.net"
+  board_website: "https://www.marionschools.net/schoolboard"
+
+surtax:
+  name: "Half-Cent Sales Tax for School Facilities"
+  rate: 0.5  # Percent
+  start_year: 2025
+  end_year: 2035
+  duration_years: 10
+  voter_approval_date: "2024-11-05"
+  estimated_annual_revenue: 45000000  # $45M estimated
+
+oversight_committee:
+  name: "School Capital Outlay Surtax Oversight Committee"
+  meeting_schedule: "Third Wednesday of each month"
+  meeting_location: "Marion County School Board Administrative Complex"
+  meeting_time: "6:00 PM"
+
+categories:
+  # Surtax spending categories specific to Marion County
+  - name: "New Construction"
+    code: "NC"
+    description: "New school buildings and major additions"
+  - name: "Renovation"
+    code: "REN"
+    description: "Major renovations to existing facilities"
+  - name: "Safety & Security"
+    code: "SEC"
+    description: "Security systems, fencing, access control"
+  - name: "Technology"
+    code: "TECH"
+    description: "Technology infrastructure and equipment"
+  - name: "HVAC"
+    code: "HVAC"
+    description: "Heating, ventilation, and air conditioning"
+  - name: "Site Improvements"
+    code: "SITE"
+    description: "Parking, sidewalks, drainage, landscaping"
+  - name: "Roofing"
+    code: "ROOF"
+    description: "Roof replacement and repairs"
+  - name: "ADA Compliance"
+    code: "ADA"
+    description: "Accessibility improvements"
+
+analytics:
+  comparison_counties:
+    - name: "Citrus"
+      fips_code: "12017"
+    - name: "Alachua"
+      fips_code: "12001"
+    - name: "Lake"
+      fips_code: "12069"
+    - name: "Sumter"
+      fips_code: "12119"
+
+display:
+  logo_path: "static/img/marion-logo.png"
+  primary_color: "#1e40af"
+  tagline: "Building Better Schools for Marion County"

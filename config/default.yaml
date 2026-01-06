@@ -1,0 +1,44 @@
+# Florida School Surtax Oversight - Default Configuration
+# This file contains default settings that can be overridden by county-specific configs
+
+app:
+  name: "School Surtax Oversight"
+  version: "1.0.0"
+  debug: false
+  secret_key: "${SECRET_KEY}"
+
+server:
+  host: "127.0.0.1"
+  port: 5847
+
+database:
+  # Default to SQLite, can be overridden for PostgreSQL in production
+  type: "sqlite"
+  path: "data/surtax.db"
+
+features:
+  # Enable/disable features per deployment
+  ai_chat: true
+  ai_insights: true
+  vendor_matching: true
+  county_comparison: true
+  public_portal: true
+  document_upload: false  # Requires file storage setup
+  email_alerts: false     # Requires SMTP setup
+
+analytics:
+  # AI/ML settings
+  enable_predictions: true
+  comparison_counties: []  # Populated by county config
+
+display:
+  # UI customization
+  theme: "default"
+  logo_path: null
+  primary_color: "#1e40af"
+
+compliance:
+  # Surtax compliance settings
+  require_capital_classification: true
+  budget_variance_alert_threshold: 10  # Percent
+  schedule_delay_alert_threshold: 30   # Days
