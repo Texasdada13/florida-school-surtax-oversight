@@ -5,6 +5,7 @@ API routes: JSON endpoints for AJAX calls and integrations
 from flask import Blueprint, jsonify, request, session
 from app.database import get_db
 from app.services.ai_chat import process_question
+from app.services.email_alerts import EmailAlertService, check_and_send_alerts
 
 api_bp = Blueprint('api', __name__)
 
@@ -116,3 +117,63 @@ def clear_watchlist():
     """Clear all items from watchlist."""
     session['watchlist'] = []
     return jsonify({'success': True, 'count': 0})
+
+
+# Email Alert API endpoints
+@api_bp.route('/alerts/status')
+def alert_status():
+    """Get email alert configuration status."""
+    service = EmailAlertService()
+    return jsonify({
+        'enabled': service.is_enabled(),
+        'configured': bool(service.config.smtp_host),
+        'recipients': len(service.config.to_emails) if service.config.to_emails else 0
+    })
+
+
+@api_bp.route('/alerts/check', methods=['POST'])
+def check_alerts():
+    """Manually trigger alert check (for testing/admin use)."""
+    conn = get_db()
+    cursor = conn.cursor()
+
+    result = check_and_send_alerts(cursor)
+    conn.commit()
+
+    return jsonify(result)
+
+
+@api_bp.route('/alerts/test', methods=['POST'])
+def test_alert():
+    """Send a test alert email."""
+    service = EmailAlertService()
+
+    if not service.is_enabled():
+        return jsonify({
+            'success': False,
+            'error': 'Email alerts not configured. Set SMTP_HOST and ALERT_EMAIL_TO environment variables.'
+        }), 400
+
+    html_body = """
+    <html>
+    <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: #22C55E; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
+            <h2 style="margin: 0;">Test Alert - Success!</h2>
+        </div>
+        <div style="padding: 20px; background: #F0FDF4; border: 1px solid #BBF7D0;">
+            <p>This is a test email from the Florida School Surtax Oversight Dashboard.</p>
+            <p>If you received this email, your alert configuration is working correctly.</p>
+        </div>
+        <div style="padding: 15px; background: #F3F4F6; color: #666; font-size: 12px; text-align: center;">
+            Florida School Surtax Oversight Dashboard
+        </div>
+    </body>
+    </html>
+    """
+
+    success = service.send_email("Test Alert", html_body, "This is a test alert email.")
+
+    return jsonify({
+        'success': success,
+        'message': 'Test email sent successfully!' if success else 'Failed to send test email.'
+    })
