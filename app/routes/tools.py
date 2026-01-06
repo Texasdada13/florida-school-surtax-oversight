@@ -1,47 +1,75 @@
 """
-Tool routes: Meeting Mode, Compliance, Map View, Public Portal, Alerts
+Tool routes: Meeting Mode, Compliance, Map View, Public Portal, Alerts, Executive View
 """
 
+from datetime import datetime
 from flask import Blueprint, render_template, current_app
 from app.database import get_db
+from app.services.stats import get_overview_stats, get_spending_by_category
 
 tools_bp = Blueprint('tools', __name__)
 
 
 @tools_bp.route('/meeting')
 def meeting_mode():
-    """Meeting Mode - presentation-friendly view."""
+    """Meeting Mode - redirects to Executive View."""
+    return executive_view()
+
+
+@tools_bp.route('/executive')
+def executive_view():
+    """Executive View - simplified dashboard for committee meetings."""
     conn = get_db()
     cursor = conn.cursor()
 
-    # Get key stats for presentation
+    # Get comprehensive stats
+    stats = get_overview_stats(cursor)
+    spending = get_spending_by_category(cursor)
+
+    # Additional metrics for executive view
     cursor.execute('''
         SELECT
-            COUNT(*) as total_projects,
-            COALESCE(SUM(current_amount), 0) as total_budget,
-            COALESCE(SUM(total_paid), 0) as total_spent,
-            COUNT(CASE WHEN status = 'Active' THEN 1 END) as active,
-            COUNT(CASE WHEN is_delayed = 1 THEN 1 END) as delayed,
-            COUNT(CASE WHEN is_over_budget = 1 THEN 1 END) as over_budget
+            COUNT(CASE WHEN status = 'Active' THEN 1 END) as active_projects,
+            COUNT(CASE WHEN status = 'Completed' THEN 1 END) as completed_projects
         FROM contracts
         WHERE is_deleted = 0 AND surtax_category IS NOT NULL
     ''')
-    stats = cursor.fetchone()
+    status_counts = cursor.fetchone()
 
-    # Key projects to highlight
+    # School count
     cursor.execute('''
-        SELECT contract_id, title, school_name, current_amount, percent_complete, status
+        SELECT COUNT(DISTINCT school_name)
         FROM contracts
-        WHERE is_deleted = 0 AND surtax_category IS NOT NULL
-        ORDER BY current_amount DESC
-        LIMIT 10
+        WHERE is_deleted = 0 AND surtax_category IS NOT NULL AND school_name IS NOT NULL
     ''')
-    top_projects = cursor.fetchall()
+    school_count = cursor.fetchone()[0] or 0
 
-    return render_template('tools/meeting_mode.html',
-                          title='Meeting Mode',
-                          stats=stats,
-                          top_projects=top_projects)
+    # Vendor count
+    cursor.execute('''
+        SELECT COUNT(DISTINCT vendor_name)
+        FROM contracts
+        WHERE is_deleted = 0 AND surtax_category IS NOT NULL AND vendor_name IS NOT NULL
+    ''')
+    vendor_count = cursor.fetchone()[0] or 0
+
+    # Calculate percentages
+    total_budget = stats.get('total_budget') or 1
+    total_spent = stats.get('total_spent') or 0
+    spent_pct = (total_spent / total_budget * 100) if total_budget > 0 else 0
+    budget_utilization = spent_pct  # For now, same as spent percentage
+
+    now = datetime.now()
+
+    return render_template('tools/executive_view.html',
+                          title='Executive View',
+                          stats={**stats, **dict(status_counts)},
+                          spending=spending,
+                          school_count=school_count,
+                          vendor_count=vendor_count,
+                          spent_pct=spent_pct,
+                          budget_utilization=budget_utilization,
+                          current_date=now.strftime('%B %d, %Y'),
+                          current_time=now.strftime('%I:%M %p'))
 
 
 @tools_bp.route('/compliance')

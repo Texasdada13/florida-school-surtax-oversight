@@ -88,6 +88,19 @@ def _register_filters(app):
             return '$0'
         return f'${value:,.0f}'
 
+    @app.template_filter('currency_short')
+    def currency_short_filter(value):
+        """Format as abbreviated currency for large displays."""
+        if value is None:
+            return '$0'
+        if abs(value) >= 1_000_000_000:
+            return f'${value/1_000_000_000:,.1f}B'
+        elif abs(value) >= 1_000_000:
+            return f'${value/1_000_000:,.1f}M'
+        elif abs(value) >= 1_000:
+            return f'${value/1_000:,.0f}K'
+        return f'${value:,.0f}'
+
     @app.template_filter('percent')
     def percent_filter(value):
         """Format as percentage."""

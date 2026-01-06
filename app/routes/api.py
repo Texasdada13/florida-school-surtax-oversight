@@ -48,7 +48,7 @@ def api_projects():
 
 @api_bp.route('/stats')
 def api_stats():
-    """Get summary statistics as JSON."""
+    """Get summary statistics as JSON for the Ask AI context sidebar."""
     conn = get_db()
     cursor = conn.cursor()
 
@@ -56,11 +56,11 @@ def api_stats():
         SELECT
             COUNT(*) as total_projects,
             SUM(current_amount) as total_budget,
-            SUM(amount_paid) as total_spent,
-            SUM(CASE WHEN status = 'Active' THEN 1 ELSE 0 END) as active,
-            SUM(CASE WHEN status = 'Complete' THEN 1 ELSE 0 END) as completed,
-            SUM(CASE WHEN is_delayed = 1 THEN 1 ELSE 0 END) as delayed,
-            SUM(CASE WHEN is_over_budget = 1 THEN 1 ELSE 0 END) as over_budget
+            SUM(total_paid) as total_spent,
+            SUM(CASE WHEN status = 'Active' THEN 1 ELSE 0 END) as active_projects,
+            SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END) as completed_projects,
+            SUM(CASE WHEN is_delayed = 1 THEN 1 ELSE 0 END) as delayed_projects,
+            SUM(CASE WHEN is_over_budget = 1 THEN 1 ELSE 0 END) as over_budget_projects
         FROM contracts
         WHERE is_deleted = 0 AND surtax_category IS NOT NULL
     ''')
